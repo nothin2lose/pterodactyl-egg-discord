@@ -42,15 +42,19 @@ jobs:
           docker run --rm \
             -v $(pwd)/install_script.sh:/mnt/install_script.sh \
             -v $(pwd)/temp_server_files:/mnt/server \
+            -e GIT_ADDRESS="https://github.com/nothin2lose/pterodactyl-egg-discord" \
+            -e INSTALL_BRANCH="master" \
+            -e USER_UPLOADED_FILES="0" \
             ${{ steps.install_info.outputs.container_image }} \
             bash /mnt/install_script.sh
 
       - name: Verify installation
         run: |
-          echo "Checking that /mnt/server directory was created..."
-          if [ -d "temp_server_files" ]; then
-            echo "Installation successful: server directory exists."
+          echo "Checking that repository was cloned..."
+          if [ -f "temp_server_files/egg-discordjs.json" ] && [ -f "temp_server_files/Dockerfile" ]; then
+            echo "Installation successful: repository files were cloned."
           else
-            echo "Installation failed: server directory was not created."
+            echo "Installation failed: expected files were not found."
+            ls -la temp_server_files
             exit 1
           fi
