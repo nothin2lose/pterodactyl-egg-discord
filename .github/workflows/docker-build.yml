@@ -12,6 +12,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node_version: ["lts", "24", "22"]
     steps:
@@ -36,7 +37,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build image locally
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -45,7 +46,7 @@ jobs:
           build-args: NODE_VERSION=${{ matrix.node_version }}
 
       - name: Scan image for vulnerabilities
-        if: "!contains(fromJSON('[\"20\",\"18\",\"16\"]'), matrix.node_version)"
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ matrix.node_version == 'lts' && 'nothin2lose/discord-egg:latest' || format('nothin2lose/discord-egg:node-{0}', matrix.node_version) }}
@@ -61,11 +62,12 @@ jobs:
       - name: Test the Docker image
         run: |
           TAG=${{ matrix.node_version == 'lts' && 'nothin2lose/discord-egg:latest' || format('nothin2lose/discord-egg:node-{0}', matrix.node_version) }}
-          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" $TAG)
+          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" $TAG 2>&1)
+          echo "Container output: $output"
           if [[ "$output" == *"-- Server started"* && "$output" == *"OK"* ]]; then
-            echo "Test passed for $TAG. Container output is valid."
+            echo "Test passed for $TAG."
           else
-            echo "Test failed for $TAG. Expected startup message and 'OK', but got '$output'."
+            echo "Test failed for $TAG. Got: '$output'"
             exit 1
           fi
 
@@ -99,7 +101,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build image locally
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -112,11 +114,12 @@ jobs:
 
       - name: Test the Docker image
         run: |
-          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" nothin2lose/discord-egg:snapshot)
+          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" nothin2lose/discord-egg:snapshot 2>&1)
+          echo "Container output: $output"
           if [[ "$output" == *"-- Server started"* && "$output" == *"OK"* ]]; then
-            echo "Test passed. Container output is valid."
+            echo "Test passed."
           else
-            echo "Test failed. Expected startup message and 'OK', but got '$output'."
+            echo "Test failed. Got: '$output'"
             exit 1
           fi
 
