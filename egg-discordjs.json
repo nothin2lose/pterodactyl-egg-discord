@@ -13,9 +13,6 @@
         "Node LTS latest (recommended)": "nothin2lose\/discord-egg:latest",
         "Node 24": "nothin2lose\/discord-egg:node-24",
         "Node 22": "nothin2lose\/discord-egg:node-22",
-        "Node EOL 20": "nothin2lose\/discord-egg:node-20",
-        "Node EOL 18": "nothin2lose\/discord-egg:node-18",
-        "Node EOL 16": "nothin2lose\/discord-egg:node-16",
         "Devbuilds (Node LTS)": "nothin2lose\/discord-egg:snapshot"
     },
     "file_denylist": [],
