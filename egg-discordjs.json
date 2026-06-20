@@ -10,7 +10,7 @@
     "description": "Node.js egg for Discord bots with git pull on startup, npm package management and optional bash pre-start script.",
     "features": null,
     "docker_images": {
-        "Node LTS latest (recommended)": "nothin2lose\/discord-egg:latest",
+        "Node LTS": "nothin2lose\/discord-egg:latest",
         "Node 24": "nothin2lose\/discord-egg:node-24",
         "Node 22": "nothin2lose\/discord-egg:node-22"
     },
