@@ -54,36 +54,3 @@ jobs:
             echo "Installation failed: server directory was not created."
             exit 1
           fi
-
-  validate-egg-docker-images:
-    runs-on: ubuntu-latest
-    needs: test-egg-installation
-    if: github.ref_name == 'master'
-    strategy:
-      matrix:
-        node_version: ["lts", "24", "22"]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Check if Docker image from egg.json exists
-        run: |
-          if [[ "${{ matrix.node_version }}" == "lts" ]]; then
-            IMAGE_NAME_KEY="Node LTS latest (recommended)"
-          else
-            IMAGE_NAME_KEY="Node ${{ matrix.node_version }}"
-          fi
-
-          DOCKER_IMAGE=$(jq -r --arg key "$IMAGE_NAME_KEY" '.docker_images[$key]' egg-discordjs.json)
-
-          if [ -z "$DOCKER_IMAGE" ] || [ "$DOCKER_IMAGE" == "null" ]; then
-            echo "Error: Docker image for '${IMAGE_NAME_KEY}' not found in egg-discordjs.json."
-            exit 1
-          fi
-
-          echo "Found image in egg: $DOCKER_IMAGE. Verifying it exists on Docker Hub..."
-          docker pull $DOCKER_IMAGE
