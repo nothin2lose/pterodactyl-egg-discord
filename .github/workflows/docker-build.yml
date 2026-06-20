@@ -61,8 +61,8 @@ jobs:
       - name: Test the Docker image
         run: |
           TAG=${{ matrix.node_version == 'lts' && '5140/discord-egg:latest' || format('5140/discord-egg:node-{0}', matrix.node_version) }}
-          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP_FILE="index.js" -e STARTUP="node index.js" $TAG)
-          if [[ "$output" == *"-- Server started, waiting for index.js..."* && "$output" == *"OK"* ]]; then
+          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" $TAG)
+          if [[ "$output" == *"-- Server started"* && "$output" == *"OK"* ]]; then
             echo "Test passed for $TAG. Container output is valid."
           else
             echo "Test failed for $TAG. Expected startup message and 'OK', but got '$output'."
@@ -112,8 +112,8 @@ jobs:
 
       - name: Test the Docker image
         run: |
-          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP_FILE="index.js" -e STARTUP="node index.js" 5140/discord-egg:snapshot)
-          if [[ "$output" == *"-- Server started, waiting for index.js..."* && "$output" == *"OK"* ]]; then
+          output=$(docker run --rm -v ${{ github.workspace }}/index.js:/home/container/index.js -e STARTUP="node /home/container/index.js" 5140/discord-egg:snapshot)
+          if [[ "$output" == *"-- Server started"* && "$output" == *"OK"* ]]; then
             echo "Test passed. Container output is valid."
           else
             echo "Test failed. Expected startup message and 'OK', but got '$output'."

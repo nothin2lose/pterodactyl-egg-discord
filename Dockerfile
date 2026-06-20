@@ -6,7 +6,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache curl bash && \
+    apk add --no-cache curl bash git && \
     adduser --disabled-password --home /home/container container
 
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh

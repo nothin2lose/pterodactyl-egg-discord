@@ -10,9 +10,6 @@ corepack enable
 echo "$ cd /home/container"
 cd /home/container
 
-echo "$ yarn install"
-yarn install
-
-echo "-- Server started, waiting for ${STARTUP_FILE}..."
+echo "-- Server started"
 
 ${MODIFIED_STARTUP}

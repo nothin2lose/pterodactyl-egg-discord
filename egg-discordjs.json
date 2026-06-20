@@ -4,10 +4,10 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2024-12-29T23:32:18+00:00",
+    "exported_at": "2026-06-20T17:38:00+02:00",
     "name": "Discord Bot \u2022 NodeJS",
     "author": "pterodactyl@stan1712.com",
-    "description": "A perfect boilerplate to start serving your DiscordJs bot !\r\nCheck out the README to get started : https:\/\/github.com\/stanislasbdx\/pterodactyl-egg-discord",
+    "description": "Node.js egg for Discord bots with git pull on startup, npm package management and optional bash pre-start script.",
     "features": null,
     "docker_images": {
         "Node LTS latest (recommended)": "5140\/discord-egg:latest",
@@ -19,39 +19,49 @@
         "Devbuilds (Node LTS)": "5140\/discord-egg:snapshot"
     },
     "file_denylist": [],
-    "startup": "node ${STARTUP_FILE}",
+    "startup": "if [[ -d .git ]] && [[ 1 == \"1\" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f \/home\/container\/package.json ]; then \/usr\/local\/bin\/npm install; fi; if [[ ! -z \"${START_BASH_FILE}\" ]]; then bash ${START_BASH_FILE}; else \/usr\/local\/bin\/node \/home\/container\/src\/index.js; fi;",
     "config": {
         "files": "{}",
-        "startup": "{\r\n    \"done\": \"-- Server started\"\r\n}",
+        "startup": "{\n    \"done\": [\"Logged in as\", \"ready\", \"-- Server started\"]\n}",
         "logs": "{}",
-        "stop": "^C^C"
+        "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n\r\napt -y update\r\napt -y upgrade\r\n\r\napt -y install curl\r\n\r\necho \"-- Downloading from : $REPO_URL\"\r\n\r\ncd \/mnt\/server\r\n\r\ncurl -L $REPO_URL\/projectdefaults\/package.json > package.json\r\ncurl -L $REPO_URL\/projectdefaults\/index.js > index.js\r\n\r\necho \"-- Server installed\"",
+            "script": "#!\/bin\/bash\r\n\r\napt -y update\r\napt -y install -y git curl ca-certificates\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\necho \"-- Server installed\"",
             "container": "debian:trixie-slim",
             "entrypoint": "bash"
         }
     },
     "variables": [
         {
-            "name": "Startup File",
-            "description": "Select a file to start your bot from.",
-            "env_variable": "STARTUP_FILE",
-            "default_value": "index.js",
+            "name": "Additional Node Packages",
+            "description": "Additional npm packages to install on startup, space-separated (e.g. express lodash). Leave empty to skip.",
+            "env_variable": "NODE_PACKAGES",
+            "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:200",
+            "rules": "nullable|string|max:191",
             "field_type": "text"
         },
         {
-            "name": "Github Repository URL",
-            "description": "The Github repository where project defaults will be downloaded.",
-            "env_variable": "REPO_URL",
-            "default_value": "https:\/\/raw.githubusercontent.com\/stanislasbdx\/pterodactyl-egg-discord\/refs\/heads\/master\/",
+            "name": "Uninstall Node Packages",
+            "description": "npm packages to uninstall on startup, space-separated. Leave empty to skip.",
+            "env_variable": "UNNODE_PACKAGES",
+            "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string",
+            "rules": "nullable|string|max:191",
+            "field_type": "text"
+        },
+        {
+            "name": "Start Bash File",
+            "description": "Optional bash script to run instead of node (e.g. start.sh). Leave empty to run node \/home\/container\/src\/index.js directly.",
+            "env_variable": "START_BASH_FILE",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:191",
             "field_type": "text"
         }
     ]
