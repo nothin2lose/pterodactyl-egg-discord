@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODIFIED_STARTUP=`eval echo $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')`
+STARTUP_CMD=$(echo "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g')
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
@@ -48,4 +48,4 @@ fi
 
 echo "-- Server started"
 
-${MODIFIED_STARTUP}
+exec bash -lc "${STARTUP_CMD}"
