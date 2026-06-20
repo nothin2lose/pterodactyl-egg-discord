@@ -4,10 +4,10 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2026-06-20T17:38:00+02:00",
+    "exported_at": "2026-06-20T18:31:00+02:00",
     "name": "Discord Bot \u2022 NodeJS",
     "author": "pterodactyl@stan1712.com",
-    "description": "Node.js egg for Discord bots with git pull on startup, npm package management and optional bash pre-start script.",
+    "description": "Node.js egg for Discord bots with public\/private GitHub repo support, auto git pull on startup, npm package management and optional bash pre-start script.",
     "features": null,
     "docker_images": {
         "Node LTS": "nothin2lose\/discord-egg:latest",
@@ -15,7 +15,7 @@
         "Node 22": "nothin2lose\/discord-egg:node-22"
     },
     "file_denylist": [],
-    "startup": "if [[ -d .git ]] && [[ 1 == \"1\" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f \/home\/container\/package.json ]; then \/usr\/local\/bin\/npm install; fi; if [[ ! -z \"${START_BASH_FILE}\" ]]; then bash ${START_BASH_FILE}; else \/usr\/local\/bin\/node \/home\/container\/src\/index.js; fi;",
+    "startup": "if [[ -d .git ]] && [[ \"${AUTO_UPDATE}\" == \"1\" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f \/home\/container\/package.json ]; then \/usr\/local\/bin\/npm install; fi; if [[ ! -z \"${START_BASH_FILE}\" ]]; then bash ${START_BASH_FILE}; else \/usr\/local\/bin\/node \/home\/container\/${BOT_JS_FILE}; fi;",
     "config": {
         "files": "{}",
         "startup": "{\n    \"done\": [\"Logged in as\", \"ready\", \"-- Server started\"]\n}",
@@ -24,15 +24,85 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n\r\napt -y update\r\napt -y install -y git curl ca-certificates\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\necho \"-- Server installed\"",
+            "script": "#!\/bin\/bash\r\n\r\napt -y update\r\napt -y install -y git curl jq file unzip ca-certificates\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\nif [ \"${USER_UPLOADED_FILES}\" == \"1\" ] || [ \"${USER_UPLOADED_FILES}\" == \"true\" ]; then\r\n    echo \"-- User uploaded files mode enabled, skipping git clone.\"\r\nelse\r\n    if [ -z \"${GIT_ADDRESS}\" ]; then\r\n        echo \"-- No GIT_ADDRESS provided, skipping git clone.\"\r\n    else\r\n        if [[ ${GIT_ADDRESS} != *.git ]]; then\r\n            GIT_ADDRESS=${GIT_ADDRESS}.git\r\n        fi\r\n\r\n        if [ -z \"${GIT_USERNAME}\" ] && [ -z \"${GIT_ACCESS_TOKEN}\" ]; then\r\n            echo \"-- Cloning public repository: ${GIT_ADDRESS}\"\r\n            git clone --single-branch --branch ${INSTALL_BRANCH:-main} ${GIT_ADDRESS} .\r\n        else\r\n            echo \"-- Cloning private repository with authentication.\"\r\n            GIT_ADDRESS_AUTH=\"https:\/\/${GIT_USERNAME}:${GIT_ACCESS_TOKEN}@$(echo ${GIT_ADDRESS} | sed 's~https*:\/\/~~')\"\r\n            git clone --single-branch --branch ${INSTALL_BRANCH:-main} ${GIT_ADDRESS_AUTH} .\r\n        fi\r\n    fi\r\nfi\r\n\r\necho \"-- Server installed\"",
             "container": "debian:trixie-slim",
             "entrypoint": "bash"
         }
     },
     "variables": [
         {
+            "name": "Git Repo Address",
+            "description": "GitHub Repo to clone I.E. https:\/\/github.com\/name\/repo_name",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Install Branch",
+            "description": "The branch of the bot to install.",
+            "env_variable": "INSTALL_BRANCH",
+            "default_value": "main",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "User Uploaded Files",
+            "description": "Skip all the install stuff if you are letting a user upload files. 0 = false (default) 1 = true",
+            "env_variable": "USER_UPLOADED_FILES",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Pull the latest files on startup when using a GitHub repo. 0 = false 1 = true (default)",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot JS File",
+            "description": "The file that starts the bot.",
+            "env_variable": "BOT_JS_FILE",
+            "default_value": "src\/index.js",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:191",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Username",
+            "description": "Username to auth with git.",
+            "env_variable": "GIT_USERNAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:191",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Access Token",
+            "description": "Password to use with git. It's best practice to use a Personal Access Token. https:\/\/github.com\/settings\/tokens",
+            "env_variable": "GIT_ACCESS_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:191",
+            "field_type": "text"
+        },
+        {
             "name": "Additional Node Packages",
-            "description": "Additional npm packages to install on startup, space-separated (e.g. express lodash). Leave empty to skip.",
+            "description": "Install additional node packages. Use spaces to separate.",
             "env_variable": "NODE_PACKAGES",
             "default_value": "",
             "user_viewable": true,
@@ -42,7 +112,7 @@
         },
         {
             "name": "Uninstall Node Packages",
-            "description": "npm packages to uninstall on startup, space-separated. Leave empty to skip.",
+            "description": "Uninstall node packages. Use spaces to separate.",
             "env_variable": "UNNODE_PACKAGES",
             "default_value": "",
             "user_viewable": true,
@@ -52,7 +122,7 @@
         },
         {
             "name": "Start Bash File",
-            "description": "Optional bash script to run instead of node (e.g. start.sh). Leave empty to run node \/home\/container\/src\/index.js directly.",
+            "description": "Specify a custom bash file to be run when starting the server. Git pulls and package installs will still be run first. If set, the bash file will be run instead of running your bot file.",
             "env_variable": "START_BASH_FILE",
             "default_value": "",
             "user_viewable": true,
